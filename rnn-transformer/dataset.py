@@ -1,5 +1,4 @@
 import tensorflow_datasets as tfds
-from tokenizer import make_batches
 
 def download_dataset(): 
     examples, metadata = tfds.load(
@@ -7,3 +6,4 @@ def download_dataset():
     )
 
     return examples["train"], examples["validation"]
+
