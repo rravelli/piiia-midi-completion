@@ -1,5 +1,21 @@
 import tensorflow as tf
-from dataset import train_batches, val_batches
+import logging
+import time
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import tensorflow_datasets as tfds
+
+import tensorflow_text
+from dataset import download_dataset
+from tokenizer import download_tokenizer, make_batches
+
+
+train_examples, val_examples = download_dataset()
+tokenizers = download_tokenizer()
+train_batches = make_batches(train_examples, tokenizers)
+val_batches = make_batches(val_examples, tokenizers)
 
 # import tensorflow_text as text
 from tranformer import (
@@ -10,8 +26,6 @@ from tranformer import (
     DEOPOUT_RATE,
     DFF,
 )
-from tokenizer import tokenizers
-
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):

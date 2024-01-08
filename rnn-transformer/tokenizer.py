@@ -1,30 +1,23 @@
 import tensorflow as tf
 
-# Download tokenizer model
-model_name = "ted_hrlr_translate_pt_en_converter"
-tf.keras.utils.get_file(
-    f"{model_name}.zip",
-    f"https://storage.googleapis.com/download.tensorflow.org/models/{model_name}.zip",  # noqa
-    cache_dir=".",
-    cache_subdir="",
-    extract=True,
-)
-# os.remove(f"{model_name}.zip")
-
-tokenizers = tf.saved_model.load(model_name)
-
-
-def get_tokenizers():
-    return tf.saved_model.load(model_name)
-
-
 MAX_TOKENS = 128
-
 BUFFER_SIZE = 20000
 BATCH_SIZE = 64
 
 
-def prepare_batch(pt, en):
+# Download tokenizer model
+def download_tokenizer():
+    model_name = "ted_hrlr_translate_pt_en_converter"
+    tf.keras.utils.get_file(
+        f"{model_name}.zip",
+        f"https://storage.googleapis.com/download.tensorflow.org/models/{model_name}.zip",  # noqa
+        cache_dir=".",
+        cache_subdir="",
+        extract=True,
+    )
+    return tf.saved_model.load(model_name)
+
+def prepare_batch(pt, en, tokenizer):
     """The following function takes batches of text as input, and converts
     them to a format suitable for training.
 
@@ -36,11 +29,11 @@ def prepare_batch(pt, en):
     4. It converts the `RaggedTensor`s to padded dense `Tensor`s.
     5. It returns an `(inputs, labels)` pair.
     """
-    pt = tokenizers.pt.tokenize(pt)  # Output is ragged.
+    pt = tokenizer.pt.tokenize(pt)  # Output is ragged.
     pt = pt[:, :MAX_TOKENS]  # Trim to MAX_TOKENS.
     pt = pt.to_tensor()  # Convert to 0-padded dense Tensor
 
-    en = tokenizers.en.tokenize(en)
+    en = tokenizer.en.tokenize(en)
     en = en[:, : (MAX_TOKENS + 1)]
     en_inputs = en[:, :-1].to_tensor()  # Drop the [END] tokens
     en_labels = en[:, 1:].to_tensor()  # Drop the [START] tokens
@@ -48,7 +41,7 @@ def prepare_batch(pt, en):
     return (pt, en_inputs), en_labels
 
 
-def make_batches(ds: tf.data.Dataset):
+def make_batches(ds: tf.data.Dataset, tokenizer):
     """The function below converts a dataset of text examples into data of
     batches for training.
 
@@ -66,6 +59,6 @@ def make_batches(ds: tf.data.Dataset):
     return (
         ds.shuffle(BUFFER_SIZE)
         .batch(BATCH_SIZE)
-        .map(prepare_batch, tf.data.AUTOTUNE)
+        .map(lambda pt, en : prepare_batch(pt, en, tokenizer), tf.data.AUTOTUNE)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
