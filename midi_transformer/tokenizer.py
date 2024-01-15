@@ -166,7 +166,7 @@ def make_midi_batches(
     """
     all_notes = []
     for f in file_paths[:num_files]:
-        notes = midi_to_notes(f)
+        notes = midi_to_notes(str(f))
         all_notes.append(notes)
 
     all_notes = pd.concat(all_notes)

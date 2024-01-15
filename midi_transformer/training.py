@@ -1,7 +1,12 @@
 import tensorflow as tf
 import keras
-from dataset import download_dataset
-from tokenizer import download_tokenizer, make_batches, VOCAB_SIZE, SEQ_LENGTH
+from dataset import download_maestro_dataset
+from tokenizer import (
+    download_tokenizer,
+    VOCAB_SIZE,
+    SEQ_LENGTH,
+    make_midi_batches,
+)
 import tensorflow_text as text  # noqa
 from tranformer import (
     Transformer,
@@ -16,10 +21,10 @@ from loss import mse_with_positive_pressure
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-train_examples, val_examples = download_dataset()
+train_examples, test_examples, val_examples = download_maestro_dataset()
 tokenizers = download_tokenizer()
-train_batches = make_batches(train_examples, tokenizers)
-val_batches = make_batches(val_examples, tokenizers)
+train_batches = make_midi_batches(train_examples)
+val_batches = make_midi_batches(val_examples)
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -80,7 +85,8 @@ transformer = Transformer(
 )
 
 inputs = keras.Input((SEQ_LENGTH, 3))
-x = transformer(inputs)
+x = keras.layers.Dense(VOCAB_SIZE)(inputs)
+x = transformer(x)
 
 outputs = {
     "pitch": keras.layers.Dense(128, name="pitch")(x),
