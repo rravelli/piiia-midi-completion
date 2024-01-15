@@ -1,5 +1,9 @@
 import tensorflow as tf
 import keras
+import pretty_midi
+import collections
+import pandas as pd
+import numpy as np
 
 MAX_TOKENS = 128
 BUFFER_SIZE = 20000
@@ -64,3 +68,34 @@ def make_batches(ds: tf.data.Dataset, tokenizer):
         .map(lambda pt, en: prepare_batch(pt, en, tokenizer), tf.data.AUTOTUNE)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
+
+
+def midi_to_notes(midi_file: str) -> pd.DataFrame:
+    """
+        Converts a MIDI file to a Dataframe
+    Args:
+        midi_file (str): path to the MIDI file
+
+    Returns:
+        pd.DataFrame: Dataframe of the notes in the MIDI file, with 5 columns :
+                        - pitch : the pitch of the note
+                        - start : timestamp for when the note starts
+                        - end : timestamp for when the note ends
+                        - step : time elapsed from the previous note or start of the track
+                        - duration : duration from start to end of the note in seconds
+    """
+    pm = pretty_midi.PrettyMIDI(midi_file)
+    instrument = pm.instruments[0]
+    notes = collections.defaultdict(list)
+
+    # Sort the notes by start time
+    sorted_notes = sorted(instrument.notes[:100], key=lambda note: note.start)
+    prev_start = sorted_notes[0].start
+
+    for note in sorted_notes:
+        start = note.start
+        end = note.end
+
+        prev_start = start
+
+    return pd.DataFrame({name: np.array(value) for name, value in notes.items()})
