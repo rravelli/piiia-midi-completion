@@ -1,4 +1,4 @@
-# import tensorflow_datasets as tfds
+import tensorflow_datasets as tfds
 import pathlib
 import tensorflow as tf
 import pandas as pd
@@ -67,3 +67,6 @@ def extract_path(dataset: pd.Series, data_dir: pathlib.Path):
         list_path.append(pathlib.Path(os.path.abspath(data_dir.joinpath(path))))
 
     return list_path
+
+
+download_maestro_dataset()
