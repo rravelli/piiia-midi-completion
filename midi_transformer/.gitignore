@@ -4,3 +4,4 @@ data/
 training_*/
 music_test.wav
 history.pkl
+Accuracy_and_Loss*

@@ -5,6 +5,8 @@ import pathlib
 import tensorflow as tf
 import pickle
 import matplotlib.pyplot as plt
+from datetime import datetime
+import os
 
 
 def midi_to_wav(midi_file, output_name):
@@ -43,4 +45,19 @@ def print_accuracy_and_loss(history_path=""):
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.xticks([i for i in range(len(loaded_history["loss"]))])
-    plt.show()
+
+    date = datetime.today().date()
+    date = date.strftime("%d-%m-%Y")
+    name = f"Accuracy_and_Loss_({date})"
+    files = [
+        fichier
+        for fichier in os.listdir(os.getcwd())
+        if os.path.isfile(os.path.join(os.getcwd(), fichier))
+    ]
+    print(files)
+    if name + ".png" in files:
+        i = 1
+        while name + f"_({i}).png" in files:
+            i += 1
+        name = name + f"_({i}).png"
+    plt.savefig(name)
