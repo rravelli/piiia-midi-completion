@@ -11,6 +11,7 @@ from tranformer import (
     DEOPOUT_RATE,
     DFF,
 )
+import pickle
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -39,9 +40,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
 learning_rate = CustomSchedule(D_MODEL)
 
-optimizer = keras.optimizers.Adam(
-    learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
-)
+optimizer = keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
 
 def masked_loss(label, pred):
@@ -79,6 +78,7 @@ cp_callback = keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_path, save_weights_only=True, verbose=1
 )
 
+history = keras.callbacks.History()
 
 transformer = Transformer(
     num_layers=NUM_LAYERS,
@@ -90,13 +90,15 @@ transformer = Transformer(
     dropout_rate=DEOPOUT_RATE,
 )
 
-transformer.compile(
-    loss=masked_loss, optimizer=optimizer, metrics=[masked_accuracy]
-)
+transformer.compile(loss=masked_loss, optimizer=optimizer, metrics=[masked_accuracy])
 
 transformer.fit(
     train_batches,
     epochs=20,
     validation_data=val_batches,
-    callbacks=cp_callback,
+    callbacks=[cp_callback, history],
 )
+
+# sauvegarde de history
+with open("history.pkl", "wb") as file:
+    pickle.dump(history.history, file)
