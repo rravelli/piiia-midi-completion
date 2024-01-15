@@ -154,7 +154,16 @@ def create_sequences(
 def make_midi_batches(
     file_paths: list[Path],
     num_files: int = 300,
-):
+) -> tf.data.Dataset:
+    """Generate a dataset from midi files
+
+    Args:
+        file_paths (list[Path]): List of paths of files to convert
+        num_files (int, optional): Number of files to include in the dataset. Defaults to 300.
+
+    Returns:
+        DatasetV2: the generated dataset containing all midi files
+    """
     all_notes = []
     for f in file_paths[:num_files]:
         notes = midi_to_notes(f)
