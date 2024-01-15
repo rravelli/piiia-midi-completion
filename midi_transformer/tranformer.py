@@ -3,7 +3,7 @@ from encoder import Encoder
 from decoder import Decoder
 
 
-NUM_LAYERS = 4
+NUM_LAYERS = 6
 D_MODEL = 128
 DFF = 512
 NUM_HEADS = 8

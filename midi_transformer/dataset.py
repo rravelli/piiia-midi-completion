@@ -1,4 +1,7 @@
 import tensorflow_datasets as tfds
+import pathlib
+import tensorflow as tf
+import os
 
 
 def download_dataset():
@@ -7,3 +10,22 @@ def download_dataset():
     )
 
     return examples["train"], examples["validation"]
+
+
+def download_midi_dataset():
+    """
+    Downloads MAESTRO MIDI dataset in a data/maestro-v.3.0.0-midi
+    """
+    data_dir = pathlib.Path("data/maestro-v3.0.0")
+    if not data_dir.exists():
+        tf.keras.utils.get_file(
+            "maestro-v3.0.0-midi.zip",
+            origin="https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip",
+            extract=True,
+            cache_dir=".",
+            cache_subdir="data",
+        )
+        os.remove("data/maestro-v3.0.0-midi.zip")
+
+
+download_midi_dataset()
