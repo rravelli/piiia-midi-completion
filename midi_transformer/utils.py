@@ -23,20 +23,24 @@ def midi_to_wav(midi_file, output_name):
 # midi_to_wav(midi_sample, output)
 
 
-def print_accuracy_and_loss():
-    with open("history.pkl", "rb") as file:
+def print_accuracy_and_loss(history_path=""):
+    with open(history_path + "history.pkl", "rb") as file:
         loaded_history = pickle.load(file)
 
+    plt.figure(figsize=(12, 6))
     # Tracer l'accuracy
-    plt.plot(loaded_history["accuracy"])
-    plt.title("Accuracy over epochs")
+    plt.subplot(1, 2, 1)
+    plt.plot(loaded_history["masked_accuracy"])
+    plt.title("Masked accuracy over epochs")
     plt.xlabel("Epochs")
     plt.ylabel("Accuracy")
-    plt.show()
+    plt.xticks([i for i in range(len(loaded_history["masked_accuracy"]))])
 
     # Tracer la perte
+    plt.subplot(1, 2, 2)
     plt.plot(loaded_history["loss"])
     plt.title("Loss over epochs")
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
+    plt.xticks([i for i in range(len(loaded_history["loss"]))])
     plt.show()
