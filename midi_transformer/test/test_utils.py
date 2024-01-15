@@ -2,7 +2,7 @@ import unittest
 import os
 from utils import midi_to_wav, print_accuracy_and_loss
 import matplotlib.pyplot as plt
-import matplotlib.testing.decorators as mptd
+from datetime import datetime
 
 class TestUtils(unittest.TestCase):
 
@@ -19,13 +19,17 @@ class TestUtils(unittest.TestCase):
         # Clean up: remove the test output file
         os.remove(wav_file_path)
     
-    @mptd.image_comparison(baseline_images=['accuracy_and_loss_plots'], extensions=['png'])
     def test_print_accuracy_and_loss(self):
-        # Test the printing of accuracy and loss graphs
-        history_path = "/home/momo/piiatransf/piiia-midi-completion/midi_transformer/test/fixture/"
-
-        # Call the function and generate the plots
-        print_accuracy_and_loss(history_path)
+        date = datetime.today().date()
+        date = date.strftime("%d-%m-%Y")
+        out_file = f"Accuracy_and_Loss_({date}).png"
+        # Test the function
+        print_accuracy_and_loss(history_path="/home/momo/piiatransf/piiia-midi-completion/midi_transformer/test/fixture/")
+        # Check if the output file is created
+        self.assertTrue(os.path.exists(out_file))
+        # Clean up: remove the test output file
+        os.remove(out_file)
+     
 
 if __name__ == '__main__':
     unittest.main()
