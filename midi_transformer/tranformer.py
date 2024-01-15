@@ -7,7 +7,7 @@ NUM_LAYERS = 6
 D_MODEL = 128
 DFF = 512
 NUM_HEADS = 8
-DEOPOUT_RATE = 0.1
+DROPOUT_RATE = 0.1
 
 
 class Transformer(keras.Model):

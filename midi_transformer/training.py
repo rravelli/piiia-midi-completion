@@ -1,17 +1,18 @@
 import tensorflow as tf
 import keras
 from dataset import download_dataset
-from tokenizer import download_tokenizer, make_batches
+from tokenizer import download_tokenizer, make_batches, VOCAB_SIZE, SEQ_LENGTH
 import tensorflow_text as text  # noqa
 from tranformer import (
     Transformer,
     D_MODEL,
     NUM_LAYERS,
     NUM_HEADS,
-    DEOPOUT_RATE,
+    DROPOUT_RATE,
     DFF,
 )
 import pickle
+from loss import mse_with_positive_pressure
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -40,21 +41,9 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
 learning_rate = CustomSchedule(D_MODEL)
 
-optimizer = keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-
-
-def masked_loss(label, pred):
-    mask = label != 0
-    loss_object = keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction="none"
-    )
-    loss = loss_object(label, pred)
-
-    mask = tf.cast(mask, dtype=loss.dtype)
-    loss *= mask
-
-    loss = tf.reduce_sum(loss) / tf.reduce_sum(mask)
-    return loss
+optimizer = keras.optimizers.Adam(
+    learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
+)
 
 
 def masked_accuracy(label, pred):
@@ -85,14 +74,40 @@ transformer = Transformer(
     d_model=D_MODEL,
     num_heads=NUM_HEADS,
     dff=DFF,
-    input_vocab_size=tokenizers.pt.get_vocab_size().numpy(),
-    target_vocab_size=tokenizers.en.get_vocab_size().numpy(),
-    dropout_rate=DEOPOUT_RATE,
+    input_vocab_size=VOCAB_SIZE,
+    target_vocab_size=VOCAB_SIZE,
+    dropout_rate=DROPOUT_RATE,
 )
 
-transformer.compile(loss=masked_loss, optimizer=optimizer, metrics=[masked_accuracy])
+inputs = keras.Input((SEQ_LENGTH, 3))
+x = transformer(inputs)
 
-transformer.fit(
+outputs = {
+    "pitch": keras.layers.Dense(128, name="pitch")(x),
+    "step": keras.layers.Dense(1, name="step")(x),
+    "duration": keras.layers.Dense(1, name="duration")(x),
+}
+
+model = keras.Model(inputs, outputs)
+
+print(model.summary())
+
+model.compile(
+    loss={
+        "pitch": keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        "step": mse_with_positive_pressure,
+        "duration": mse_with_positive_pressure,
+    },
+    loss_weights={
+        "pitch": 0.05,
+        "step": 1.0,
+        "duration": 1.0,
+    },
+    optimizer=optimizer,
+    metrics=[masked_accuracy],
+)
+
+model.fit(
     train_batches,
     epochs=20,
     validation_data=val_batches,
