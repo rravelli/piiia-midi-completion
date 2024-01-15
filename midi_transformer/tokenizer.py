@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras
 
 MAX_TOKENS = 128
 BUFFER_SIZE = 20000
@@ -8,7 +9,7 @@ BATCH_SIZE = 64
 # Download tokenizer model
 def download_tokenizer():
     model_name = "ted_hrlr_translate_pt_en_converter"
-    tf.keras.utils.get_file(
+    keras.utils.get_file(
         f"{model_name}.zip",
         f"https://storage.googleapis.com/download.tensorflow.org/models/{model_name}.zip",  # noqa
         cache_dir=".",

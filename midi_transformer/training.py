@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras
 from dataset import download_dataset
 from tokenizer import download_tokenizer, make_batches
 import tensorflow_text as text  # noqa
@@ -11,10 +12,7 @@ from tranformer import (
     DFF,
 )
 
-# gpu = tf.config.list_physical_devices("GPU")
-# tf.config.experimental.set_memory_growth(gpu[0], True)  # limits gpu memory
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
 
 train_examples, val_examples = download_dataset()
 tokenizers = download_tokenizer()
@@ -41,14 +39,14 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
 learning_rate = CustomSchedule(D_MODEL)
 
-optimizer = tf.keras.optimizers.Adam(
+optimizer = keras.optimizers.Adam(
     learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
 )
 
 
 def masked_loss(label, pred):
     mask = label != 0
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+    loss_object = keras.losses.SparseCategoricalCrossentropy(
         from_logits=True, reduction="none"
     )
     loss = loss_object(label, pred)
@@ -74,6 +72,14 @@ def masked_accuracy(label, pred):
     return tf.reduce_sum(match) / tf.reduce_sum(mask)
 
 
+checkpoint_path = "training_1/cp.ckpt"
+
+# Create a callback that saves the model's weights
+cp_callback = keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_path, save_weights_only=True, verbose=1
+)
+
+
 transformer = Transformer(
     num_layers=NUM_LAYERS,
     d_model=D_MODEL,
@@ -88,4 +94,9 @@ transformer.compile(
     loss=masked_loss, optimizer=optimizer, metrics=[masked_accuracy]
 )
 
-transformer.fit(train_batches, epochs=20, validation_data=val_batches)
+transformer.fit(
+    train_batches,
+    epochs=20,
+    validation_data=val_batches,
+    callbacks=cp_callback,
+)

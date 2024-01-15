@@ -1,4 +1,4 @@
-import tensorflow as tf
+import keras
 from encoder import Encoder
 from decoder import Decoder
 
@@ -10,7 +10,7 @@ NUM_HEADS = 8
 DEOPOUT_RATE = 0.1
 
 
-class Transformer(tf.keras.Model):
+class Transformer(keras.Model):
     def __init__(
         self,
         *,
@@ -41,7 +41,7 @@ class Transformer(tf.keras.Model):
             dropout_rate=dropout_rate,
         )
 
-        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+        self.final_layer = keras.layers.Dense(target_vocab_size)
 
     def call(self, inputs):
         # To use a Keras model with `.fit` you must pass all your inputs in the
