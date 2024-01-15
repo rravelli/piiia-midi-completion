@@ -1,6 +1,7 @@
 import pathlib
 import os
 from dataset import download_maestro_dataset
+import shutil
 from unittest import TestCase
 
 
@@ -13,3 +14,4 @@ class TestDataset(TestCase):
         abs_path = os.path.abspath(data_dir)
         self.assertTrue(str(train_path[0]).startswith(abs_path))
         self.assertTrue(str(train_path[0]).endswith(".midi"))
+        shutil.rmtree("data")

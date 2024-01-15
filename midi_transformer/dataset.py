@@ -67,6 +67,3 @@ def extract_path(dataset: pd.Series, data_dir: pathlib.Path):
         list_path.append(pathlib.Path(os.path.abspath(data_dir.joinpath(path))))
 
     return list_path
-
-
-download_maestro_dataset()
