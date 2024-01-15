@@ -1,23 +1,7 @@
 import tensorflow as tf
-import logging
-import time
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-import tensorflow_datasets as tfds
-
-import tensorflow_text
 from dataset import download_dataset
 from tokenizer import download_tokenizer, make_batches
-
-
-train_examples, val_examples = download_dataset()
-tokenizers = download_tokenizer()
-train_batches = make_batches(train_examples, tokenizers)
-val_batches = make_batches(val_examples, tokenizers)
-
-# import tensorflow_text as text
+import tensorflow_text as text  # noqa
 from tranformer import (
     Transformer,
     D_MODEL,
@@ -26,6 +10,17 @@ from tranformer import (
     DEOPOUT_RATE,
     DFF,
 )
+
+# gpu = tf.config.list_physical_devices("GPU")
+# tf.config.experimental.set_memory_growth(gpu[0], True)  # limits gpu memory
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+
+train_examples, val_examples = download_dataset()
+tokenizers = download_tokenizer()
+train_batches = make_batches(train_examples, tokenizers)
+val_batches = make_batches(val_examples, tokenizers)
+
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):

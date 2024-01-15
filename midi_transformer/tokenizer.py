@@ -17,6 +17,7 @@ def download_tokenizer():
     )
     return tf.saved_model.load(model_name)
 
+
 def prepare_batch(pt, en, tokenizer):
     """The following function takes batches of text as input, and converts
     them to a format suitable for training.
@@ -59,6 +60,6 @@ def make_batches(ds: tf.data.Dataset, tokenizer):
     return (
         ds.shuffle(BUFFER_SIZE)
         .batch(BATCH_SIZE)
-        .map(lambda pt, en : prepare_batch(pt, en, tokenizer), tf.data.AUTOTUNE)
+        .map(lambda pt, en: prepare_batch(pt, en, tokenizer), tf.data.AUTOTUNE)
         .prefetch(buffer_size=tf.data.AUTOTUNE)
     )
