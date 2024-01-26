@@ -142,10 +142,11 @@ def create_sequences(
 
     # Split the labels
     def split_labels(sequences):
-        inputs = sequences[:seq_length]
-        labels = sequences[seq_length : 2 * seq_length]
+        context = sequences[:seq_length]
+        inputs = sequences[seq_length : 2 * seq_length - 1]
+        labels = sequences[seq_length + 1 : 2 * seq_length]
         # labels = {key: labels_dense[i] for i, key in enumerate(KEY_ORDER)}
-        return inputs[:, 0], labels[:, 0]
+        return (context[:, 0], inputs[:, 0]), labels[:, 0]
 
     return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 

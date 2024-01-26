@@ -51,7 +51,6 @@ class Transformer(keras.Model):
         context = self.encoder(context)  # (batch_size, context_len, d_model)
 
         x = self.decoder(x, context)  # (batch_size, target_len, d_model)
-
         # Final linear layer output.
         logits = self.final_layer(
             x

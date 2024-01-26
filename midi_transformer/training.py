@@ -16,7 +16,8 @@ from tranformer import (
     DFF,
 )
 import pickle
-from loss import mse_with_positive_pressure
+
+# from loss import mse_with_positive_pressure
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -98,12 +99,6 @@ def masked_loss(label, pred):
     return loss
 
 
-# x = transformer
-for i, batch in train_batches.enumerate():
-    print(batch)
-    print(transformer((batch[0], batch[1])))
-    break
-
 transformer.compile(
     # loss={
     #     "pitch": keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -120,13 +115,13 @@ transformer.compile(
     metrics=[masked_accuracy],
 )
 
-# transformer.fit(
-#     train_batches,
-#     epochs=20,
-#     validation_data=val_batches,
-#     callbacks=[cp_callback, history],
-# )
+transformer.fit(
+    train_batches,
+    epochs=20,
+    validation_data=val_batches,
+    callbacks=[cp_callback, history],
+)
 
 # sauvegarde de history
-# with open("history.pkl", "wb") as file:
-#     pickle.dump(history.history, file)
+with open("history.pkl", "wb") as file:
+    pickle.dump(history.history, file)
