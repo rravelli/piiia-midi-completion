@@ -1,16 +1,7 @@
-import tensorflow_datasets as tfds
 import pathlib
 import tensorflow as tf
 import pandas as pd
 import os
-
-
-def download_dataset():
-    examples, metadata = tfds.load(
-        "ted_hrlr_translate/pt_to_en", with_info=True, as_supervised=True
-    )
-
-    return examples["train"], examples["validation"]
 
 
 def download_maestro_dataset():

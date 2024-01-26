@@ -2,7 +2,6 @@ import tensorflow as tf
 import keras
 from dataset import download_maestro_dataset
 from tokenizer import (
-    download_tokenizer,
     VOCAB_SIZE,
     make_midi_batches,
 )
@@ -17,12 +16,9 @@ from tranformer import (
 )
 import pickle
 
-# from loss import mse_with_positive_pressure
-
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 train_examples, test_examples, val_examples = download_maestro_dataset()
-tokenizers = download_tokenizer()
 train_batches = make_midi_batches(train_examples)
 val_batches = make_midi_batches(val_examples)
 
@@ -46,9 +42,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
 learning_rate = CustomSchedule(D_MODEL)
 
-optimizer = keras.optimizers.Adam(
-    learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
-)
+optimizer = keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
 
 def masked_accuracy(label, pred):
