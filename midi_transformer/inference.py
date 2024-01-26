@@ -45,12 +45,11 @@ def notes_to_midi(
 
 
 def generate_music(midi_file_path, transformer_path, name_output):
-    transformer = TFAutoModel.from_pretrained("transformer")
-    transformer.load_weights(transformer_path + "model_transformer.ckpt")
+    transformer = tf.keras.models.load_model(transformer_path + "midi_transformer")
 
     notes_midi = midi_to_notes(midi_file_path)
 
-    generator = Generator(transformer)
+    generator = MIDIGenerator(transformer)
     generated_midi, generated_tokens, attention_weights = generator(
         tf.constant(notes_midi)
     )
