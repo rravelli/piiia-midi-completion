@@ -4,7 +4,6 @@ from dataset import download_maestro_dataset
 from tokenizer import (
     download_tokenizer,
     VOCAB_SIZE,
-    SEQ_LENGTH,
     make_midi_batches,
 )
 import tensorflow_text as text  # noqa
@@ -84,42 +83,50 @@ transformer = Transformer(
     dropout_rate=DROPOUT_RATE,
 )
 
-inputs = keras.Input((SEQ_LENGTH, 3))
-x = keras.layers.Dense(VOCAB_SIZE)(inputs)
-x = transformer(x)
 
-outputs = {
-    "pitch": keras.layers.Dense(128, name="pitch")(x),
-    "step": keras.layers.Dense(1, name="step")(x),
-    "duration": keras.layers.Dense(1, name="duration")(x),
-}
+def masked_loss(label, pred):
+    mask = label != 0
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction="none"
+    )
+    loss = loss_object(label, pred)
 
-model = keras.Model(inputs, outputs)
+    mask = tf.cast(mask, dtype=loss.dtype)
+    loss *= mask
 
-print(model.summary())
+    loss = tf.reduce_sum(loss) / tf.reduce_sum(mask)
+    return loss
 
-model.compile(
-    loss={
-        "pitch": keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        "step": mse_with_positive_pressure,
-        "duration": mse_with_positive_pressure,
-    },
-    loss_weights={
-        "pitch": 0.05,
-        "step": 1.0,
-        "duration": 1.0,
-    },
+
+# x = transformer
+for i, batch in train_batches.enumerate():
+    print(batch)
+    print(transformer((batch[0], batch[1])))
+    break
+
+transformer.compile(
+    # loss={
+    #     "pitch": keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    #     "step": mse_with_positive_pressure,
+    #     "duration": mse_with_positive_pressure,
+    # },
+    # loss_weights={
+    #     "pitch": 0.05,
+    #     "step": 1.0,
+    #     "duration": 1.0,
+    # },
+    loss=masked_loss,
     optimizer=optimizer,
     metrics=[masked_accuracy],
 )
 
-model.fit(
-    train_batches,
-    epochs=20,
-    validation_data=val_batches,
-    callbacks=[cp_callback, history],
-)
+# transformer.fit(
+#     train_batches,
+#     epochs=20,
+#     validation_data=val_batches,
+#     callbacks=[cp_callback, history],
+# )
 
 # sauvegarde de history
-with open("history.pkl", "wb") as file:
-    pickle.dump(history.history, file)
+# with open("history.pkl", "wb") as file:
+#     pickle.dump(history.history, file)

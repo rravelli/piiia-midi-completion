@@ -122,16 +122,16 @@ def create_sequences(
     vocab_size=128,
 ) -> tf.data.Dataset:
     """Returns TF Dataset of sequence and label examples."""
-    seq_length = seq_length + 1
+    # seq_length = seq_length + 1
 
     # Take 1 extra for the labels
     windows = dataset.window(
-        seq_length, shift=1, stride=1, drop_remainder=True
+        2 * seq_length, shift=1, stride=1, drop_remainder=True
     )
 
     # `flat_map` flattens the" dataset of datasets" into a dataset of tensors
     def flatten(ds: tf.data.Dataset):
-        return ds.batch(seq_length, drop_remainder=True)
+        return ds.batch(2 * seq_length, drop_remainder=True)
 
     sequences = windows.flat_map(flatten)
 
@@ -142,11 +142,10 @@ def create_sequences(
 
     # Split the labels
     def split_labels(sequences):
-        inputs = sequences[:-1]
-        labels_dense = sequences[-1]
-        labels = {key: labels_dense[i] for i, key in enumerate(KEY_ORDER)}
-
-        return scale_pitch(inputs), labels
+        inputs = sequences[:seq_length]
+        labels = sequences[seq_length : 2 * seq_length]
+        # labels = {key: labels_dense[i] for i, key in enumerate(KEY_ORDER)}
+        return inputs[:, 0], labels[:, 0]
 
     return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 
