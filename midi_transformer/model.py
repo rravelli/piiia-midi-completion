@@ -1,14 +1,14 @@
-import tensorflow as tf
 import keras
-from tranformer import (
-    Transformer,
-    D_MODEL,
-    NUM_LAYERS,
-    NUM_HEADS,
-    DROPOUT_RATE,
-    DFF,
-)
+import tensorflow as tf
 from tokenizer import VOCAB_SIZE
+from tranformer import (
+    D_MODEL,
+    DFF,
+    DROPOUT_RATE,
+    NUM_HEADS,
+    NUM_LAYERS,
+    Transformer,
+)
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
