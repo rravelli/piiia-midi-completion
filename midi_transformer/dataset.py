@@ -1,7 +1,8 @@
-import pathlib
-import tensorflow as tf
-import pandas as pd
 import os
+import pathlib
+
+import pandas as pd
+import tensorflow as tf
 
 
 def download_maestro_dataset():
@@ -32,7 +33,9 @@ def download_maestro_dataset():
 
     train_df = midi_df["midi_filename"].loc[midi_df["split"] == "train"]
     test_df = midi_df["midi_filename"].loc[midi_df["split"] == "test"]
-    validation_df = midi_df["midi_filename"].loc[midi_df["split"] == "validation"]
+    validation_df = midi_df["midi_filename"].loc[
+        midi_df["split"] == "validation"
+    ]
 
     train_midi = extract_path(train_df, data_dir)
     test_midi = extract_path(test_df, data_dir)
@@ -55,6 +58,8 @@ def extract_path(dataset: pd.Series, data_dir: pathlib.Path):
     list_path = []
 
     for path in dataset:
-        list_path.append(pathlib.Path(os.path.abspath(data_dir.joinpath(path))))
+        list_path.append(
+            pathlib.Path(os.path.abspath(data_dir.joinpath(path)))
+        )
 
     return list_path

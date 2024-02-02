@@ -1,8 +1,9 @@
-import pathlib
 import os
-from dataset import download_maestro_dataset
+import pathlib
 import shutil
 from unittest import TestCase
+
+from dataset import download_maestro_dataset
 
 
 class TestDataset(TestCase):

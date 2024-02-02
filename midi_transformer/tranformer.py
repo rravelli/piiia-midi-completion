@@ -1,7 +1,6 @@
 import keras
-from encoder import Encoder
 from decoder import Decoder
-
+from encoder import Encoder
 
 NUM_LAYERS = 6
 D_MODEL = 128

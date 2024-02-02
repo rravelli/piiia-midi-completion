@@ -1,6 +1,7 @@
-import unittest
-import pandas as pd
 import os
+import unittest
+
+import pandas as pd
 import pretty_midi
 from inference import notes_to_midi
 

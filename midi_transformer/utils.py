@@ -1,9 +1,10 @@
+import os
+import pickle
+from datetime import datetime
+
+import matplotlib.pyplot as plt
 import pretty_midi
 from scipy.io import wavfile
-import pickle
-import matplotlib.pyplot as plt
-from datetime import datetime
-import os
 
 
 def midi_to_wav(midi_file, output_name):
