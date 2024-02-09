@@ -14,7 +14,7 @@ def midi_to_wav(midi_file, output_name):
 
 
 def print_accuracy_and_loss(history_path=""):
-    with open(history_path + "history.pkl", "rb") as file:
+    with open(history_path + "/history.pkl", "rb") as file:
         loaded_history = pickle.load(file)
 
     plt.figure(figsize=(12, 6))

@@ -9,6 +9,7 @@ from tranformer import (
     NUM_LAYERS,
     Transformer,
 )
+from loss import masked_loss
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -26,20 +27,6 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         arg2 = step * (self.warmup_steps**-1.5)
 
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
-
-
-def masked_loss(label, pred):
-    mask = label != 0
-    loss_object = keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction="none"
-    )
-    loss = loss_object(label, pred)
-
-    mask = tf.cast(mask, dtype=loss.dtype)
-    loss *= mask
-
-    loss = tf.reduce_sum(loss) / tf.reduce_sum(mask)
-    return loss
 
 
 def masked_accuracy(label, pred):
