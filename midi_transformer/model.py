@@ -9,7 +9,7 @@ from tranformer import (
     NUM_LAYERS,
     Transformer,
 )
-from loss import masked_loss, perplexity
+from loss import masked_loss, perplexity1, perplexity2, perplexity3, perplexity
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
