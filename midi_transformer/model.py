@@ -9,7 +9,7 @@ from tranformer import (
     NUM_LAYERS,
     Transformer,
 )
-from loss import masked_loss
+from loss import masked_loss, perplexity
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -61,7 +61,7 @@ def create_model():
     )
 
     model.compile(
-        loss=masked_loss,
+        loss=perplexity,
         optimizer=optimizer,
         metrics=[masked_accuracy],
     )

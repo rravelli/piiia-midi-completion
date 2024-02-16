@@ -1,12 +1,18 @@
 import keras
 import tensorflow as tf
+from keras import backend
+from tokenizer import VOCAB_SIZE
 
 
 def masked_loss(label, pred):
+    print(label, pred)
+    print(VOCAB_SIZE)
     mask = label != 0
+    print(mask)
     loss_object = keras.losses.SparseCategoricalCrossentropy(
         from_logits=True, reduction="none"
     )
+    
     loss = loss_object(label, pred)
 
     mask = tf.cast(mask, dtype=loss.dtype)
@@ -15,8 +21,7 @@ def masked_loss(label, pred):
     loss = tf.reduce_sum(loss) / tf.reduce_sum(mask)
     return loss
 
+def perplexity(label, pred):
+    cross_entropy = backend.sparse_categorical_crossentropy(label, pred)
+    return backend.mean(backend.exp(backend.mean(cross_entropy, axis=-1)))
 
-def mse_with_positive_pressure(y_true: tf.Tensor, y_pred: tf.Tensor):
-    mse = (y_true - y_pred) ** 2
-    positive_pressure = 10 * tf.maximum(-y_pred, 0.0)
-    return tf.reduce_mean(mse + positive_pressure)
