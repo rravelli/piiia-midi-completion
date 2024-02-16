@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     transformer = create_model()
 
-    checkpoint_path = "training_2/cp.ckpt"
+    checkpoint_path = "training_3/cp.ckpt"
 
     # Create a callback that saves the model's weights
     cp_callback = keras.callbacks.ModelCheckpoint(

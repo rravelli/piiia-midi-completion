@@ -1,10 +1,17 @@
+import datetime
+from os import environ, makedirs
+from random import randint
+
+import numpy as np
 import pandas as pd
 import pretty_midi
 import tensorflow as tf
-from symusic import Score
-
-# from utils import midi_to_wav
-from tokenizer import REMI, SEQ_LENGTH
+from dataset import download_maestro_dataset
+from midi2audio import FluidSynth
+from model import create_model
+from symusic.factory import Score, ScoreFactory
+from tokenizer import REMI, SEQ_LENGTH, TOKENIZER
+from tqdm import tqdm
 from tranformer import Transformer
 
 
@@ -50,62 +57,99 @@ class MIDIGenerator(tf.Module):
         self.transformer = transformer
         self.tokenizer = tokenizer
 
-    def __call__(self, score: Score(), max_length=SEQ_LENGTH):
-
-        melody = tf.convert_to_tensor(self.tokenizer(score).ids[:SEQ_LENGTH])
+    def __call__(
+        self,
+        score: ScoreFactory,
+        max_length=SEQ_LENGTH,
+        recursions: int = 1,
+        slice_start=True,
+    ):
+        if slice_start:
+            melody = tf.convert_to_tensor(
+                self.tokenizer(score).ids[SEQ_LENGTH : 2 * SEQ_LENGTH]
+            )
+        else:
+            melody = tf.convert_to_tensor(
+                self.tokenizer(score).ids[-2 * SEQ_LENGTH :]
+            )
         melody = tf.reshape(melody, (1, melody.shape[0]))
-        print(melody)
-        # melody = self.tokenizers.pt.tokenize(melody).to_tensor()
 
         encoder_input = melody
+        final_output = melody.numpy()
 
-        # As the output language is English, initialize the output with the
-        # English `[START]` token.
-        # start_end = self.tokenizers.en.tokenize([""])[0]
-        # start = start_end[0][tf.newaxis]
-        # end = start_end[1][tf.newaxis]
+        for _ in tqdm(range(recursions)):
+            output_array = tf.TensorArray(
+                dtype=tf.int64, size=0, dynamic_size=True
+            )
+            output_array = output_array.write(0, [0])
+            encoder_input = tf.convert_to_tensor(final_output[-SEQ_LENGTH:])
+            for i in tqdm(tf.range(max_length)):
+                output = tf.transpose(output_array.stack())
+                predictions = self.transformer(
+                    (encoder_input, output), training=False
+                )
 
-        # `tf.TensorArray` is required here (instead of a Python list), so that the
-        # dynamic-loop can be traced by `tf.function`.
-        # output_array = tf.TensorArray(
-        #     dtype=tf.int64, size=0, dynamic_size=True
-        # )
-        output_array = tf.zeros((1, 63))
+                # Select the last token from the `seq_len` dimension.
+                predictions = predictions[
+                    :, -1:, :
+                ]  # Shape `(batch_size, 1, vocab_size)`.
 
-        for i in tf.range(max_length):
-            # output = tf.transpose(output_array.stack())
-            output = output_array
-            print(encoder_input.shape, output.shape)
-            predictions = self.transformer(
-                (encoder_input, output), training=False
+                predicted_id = tf.argmax(predictions, axis=-1)
+
+                # Concatenate the `predicted_id` to the output which is given to the
+                # decoder as its input.
+                output_array = output_array.write(i + 1, predicted_id[0])
+
+            output = tf.transpose(output_array.stack())
+            final_output = np.concatenate(
+                (final_output, output.numpy()), axis=1
             )
 
-            # Select the last token from the `seq_len` dimension.
-            predictions = predictions[
-                :, -1:, :
-            ]  # Shape `(batch_size, 1, vocab_size)`.
+        input_ = self.tokenizer(score).ids
+        if slice_start:
+            input_ = input_[: 2 * SEQ_LENGTH]
 
-            predicted_id = tf.argmax(predictions, axis=-1)
-
-            # Concatenate the `predicted_id` to the output which is given to the
-            # decoder as its input.
-            output_array = output_array.write(i + 1, predicted_id[0])
-
-            # if predicted_id == end:
-            #     break
-
-        output = tf.transpose(output_array.stack())
-        # The output shape is `(1, tokens)`.
-        output_melody = self.tokenizer.tokens_to_midi(output.to_numpy())[
-            0
-        ]  # Shape: `()`
-
-        # tokens = self.tokenizer
-
-        # `tf.function` prevents us from using the attention_weights that were
-        # calculated on the last iteration of the loop.
-        # So, recalculate them outside the loop.
         self.transformer([encoder_input, output[:, :-1]], training=False)
         attention_weights = self.transformer.decoder.last_attn_scores
 
-        return output_melody, output, attention_weights
+        return input_, final_output[0], attention_weights
+
+
+def generate_sample(
+    input_file: str,
+    recursions=1,
+    output_dir="generated_samples",
+    weights_path: str = "training_2/cp.ckpt",
+):
+    score = Score(input_file)
+    # init model
+    model = create_model()
+    model.load_weights(weights_path)
+    # generate midi
+    input, output, _ = MIDIGenerator(model, TOKENIZER)(
+        score, recursions=recursions
+    )
+
+    date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    sample_dir = f"{output_dir}/{date}"
+    makedirs(sample_dir, exist_ok=True)
+    # convert to midi
+    TOKENIZER(input).dump_midi(f"{sample_dir}/input.mid")
+    TOKENIZER(output).dump_midi(f"{sample_dir}/output.mid")
+    TOKENIZER(list(input) + list(output)).dump_midi(f"{sample_dir}/final.mid")
+    with open(f"{sample_dir}/.gitignore", "w") as f:
+        f.write("*")
+    # convert to audio
+    FluidSynth().midi_to_audio(
+        f"{sample_dir}/final.mid", f"{sample_dir}/final.wav"
+    )
+
+
+if __name__ == "__main__":
+    # set gpu to false
+    environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    # get midis
+    _, _, examples = download_maestro_dataset()
+    file = examples[randint(0, len(examples) - 1)]
+    # generate
+    generate_sample(file, recursions=6)

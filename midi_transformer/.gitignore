@@ -1,8 +1,9 @@
 ted_hrlr_translate_pt_en_converter.zip
 ted_hrlr_translate_pt_en_converter
 data/
-training_*/
 music_test.wav
 history.pkl
 Accuracy_and_Loss*
 saved_model/
+samples/
+training_*/
