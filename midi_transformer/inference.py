@@ -63,10 +63,11 @@ class MIDIGenerator(tf.Module):
         max_length=SEQ_LENGTH,
         recursions: int = 1,
         slice_start=True,
+        offset: int = 0,
     ):
         if slice_start:
             melody = tf.convert_to_tensor(
-                self.tokenizer(score).ids[SEQ_LENGTH : 2 * SEQ_LENGTH]
+                self.tokenizer(score).ids[SEQ_LENGTH + offset : 2 * SEQ_LENGTH]
             )
         else:
             melody = tf.convert_to_tensor(
@@ -115,18 +116,60 @@ class MIDIGenerator(tf.Module):
         return input_, final_output[0], attention_weights
 
 
+class MIDIGenerator2(tf.Module):
+    def __init__(self, transformer: Transformer, tokenizer: REMI):
+        self.transformer = transformer
+        self.tokenizer = tokenizer
+
+    def __call__(
+        self,
+        score: ScoreFactory,
+        recursions: int = 1,
+        offset: int = 0,
+    ):
+
+        melody = self.tokenizer(score).ids[offset : 4 * SEQ_LENGTH + offset]
+
+        data_list = melody
+        output = []
+        for _ in tqdm(range(recursions)):
+            data = tf.constant([data_list])
+
+            context_array = data[:, -2 * SEQ_LENGTH : SEQ_LENGTH]
+            input_array = data[:, -SEQ_LENGTH:]
+            predictions = self.transformer(
+                (
+                    context_array,
+                    input_array,
+                ),
+                training=False,
+            )
+
+            # Select the last token from the `seq_len` dimension.
+            predictions = predictions[
+                :, -1:, :
+            ]  # Shape `(batch_size, 1, vocab_size)`.
+            predicted_id = tf.argmax(predictions, axis=-1)
+            token = int(predicted_id[0, 0])
+            data_list.append(token)
+            output.append(token)
+
+        return melody, output
+
+
 def generate_sample(
     input_file: str,
     recursions=1,
     output_dir="generated_samples",
-    weights_path: str = "training_2/cp.ckpt",
+    weights_path: str = "training_data/training_2/cp.ckpt",
 ):
     score = Score(input_file)
     # init model
     model = create_model()
     model.load_weights(weights_path)
+    # offset = randint(1, 1000)
     # generate midi
-    input, output, _ = MIDIGenerator(model, TOKENIZER)(
+    input, output = MIDIGenerator2(model, TOKENIZER)(
         score, recursions=recursions
     )
 
@@ -143,6 +186,9 @@ def generate_sample(
     FluidSynth().midi_to_audio(
         f"{sample_dir}/final.mid", f"{sample_dir}/final.wav"
     )
+    FluidSynth().midi_to_audio(
+        f"{sample_dir}/output.mid", f"{sample_dir}/output.wav"
+    )
 
 
 if __name__ == "__main__":
@@ -151,5 +197,10 @@ if __name__ == "__main__":
     # get midis
     _, _, examples = download_maestro_dataset()
     file = examples[randint(0, len(examples) - 1)]
+    # file = "./Pop 1 - C major.mid"
     # generate
-    generate_sample(file, recursions=6)
+    generate_sample(
+        file,
+        recursions=64 * 8,
+        weights_path="training_data/training_2/cp.ckpt",
+    )
