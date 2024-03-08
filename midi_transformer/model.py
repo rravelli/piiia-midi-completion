@@ -1,5 +1,6 @@
 import keras
 import tensorflow as tf
+from loss import perplexity
 from tokenizer import VOCAB_SIZE
 from tranformer import (
     D_MODEL,
@@ -9,10 +10,9 @@ from tranformer import (
     NUM_LAYERS,
     Transformer,
 )
-from loss import masked_loss, perplexity1, perplexity2, perplexity3, perplexity
 
 
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+class CustomSchedule(keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
         super().__init__()
 
@@ -20,6 +20,16 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         self.d_model = tf.cast(self.d_model, tf.float32)
 
         self.warmup_steps = warmup_steps
+
+    def get_config(self):
+        config = {"warmup_steps": self.warmup_steps, "d_model": self.d_model}
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        d_model = config.pop("d_model")
+        warmup_steps = config.pop("warmup_steps")
+        return cls(d_model, warmup_steps, **config)
 
     def __call__(self, step):
         step = tf.cast(step, dtype=tf.float32)

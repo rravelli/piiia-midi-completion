@@ -13,8 +13,8 @@ def midi_to_wav(midi_file, output_name):
     wavfile.write(output_name + ".wav", 44100, audio_data)
 
 
-def print_accuracy_and_loss(history_path=""):
-    with open(history_path + "/history.pkl", "rb") as file:
+def print_accuracy_and_loss(history_path="history.pkl"):
+    with open(history_path, "rb") as file:
         loaded_history = pickle.load(file)
 
     plt.figure(figsize=(12, 6))
