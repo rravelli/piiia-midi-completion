@@ -1,14 +1,11 @@
 import keras
 import tensorflow as tf
-from keras import backend as K
+import keras.backend as K
 from tokenizer import VOCAB_SIZE
 
 
 def masked_loss(label, pred):
-    print(label, pred)
-    print(VOCAB_SIZE)
     mask = label != 0
-    print(mask)
     loss_object = keras.losses.SparseCategoricalCrossentropy(
         from_logits=True, reduction="none"
     )
@@ -23,32 +20,13 @@ def masked_loss(label, pred):
 
 
 def perplexity(label, pred):
-    cross_entropy = K.sparse_categorical_crossentropy(
-        label, pred, from_logits=True
-    )
-    return K.mean(K.exp(K.mean(cross_entropy, axis=-1)))
-
-
-def perplexity1(label, pred):
-    loss_object = keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction="none"
-    )
-
-    loss = loss_object(label, pred)
-    return tf.math.exp(loss)
-
-
-def perplexity2(label, pred):
-    cross_entropy = K.sparse_categorical_crossentropy(
-        label, pred, from_logits=True
-    )
+    mask = label != 0
+    cross_entropy = K.sparse_categorical_crossentropy(label, pred)
     perplexity = K.exp(cross_entropy)
+
+    mask = tf.cast(mask, dtype=perplexity.dtype)
+    perplexity *= mask
+
+    perplexity = tf.reduce_sum(perplexity) / tf.reduce_sum(mask)
+
     return perplexity
-
-
-def perplexity3(label, pred):
-    return K.exp(
-        K.mean(
-            K.sparse_categorical_crossentropy(label, pred, from_logits=True)
-        )
-    )

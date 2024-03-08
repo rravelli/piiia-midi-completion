@@ -1,6 +1,5 @@
 import keras
 import tensorflow as tf
-from loss import perplexity
 from tokenizer import VOCAB_SIZE
 from tranformer import (
     D_MODEL,
@@ -10,6 +9,7 @@ from tranformer import (
     NUM_LAYERS,
     Transformer,
 )
+from loss import masked_loss, perplexity
 
 
 class CustomSchedule(keras.optimizers.schedules.LearningRateSchedule):
@@ -73,6 +73,6 @@ def create_model():
     model.compile(
         loss=perplexity,
         optimizer=optimizer,
-        metrics=[masked_accuracy],
+        metrics=[],
     )
     return model
