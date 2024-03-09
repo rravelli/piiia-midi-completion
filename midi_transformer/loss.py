@@ -21,7 +21,10 @@ def masked_loss(label, pred):
 
 def perplexity(label, pred):
     mask = label != 0
-    cross_entropy = K.sparse_categorical_crossentropy(label, pred)
+    loss_object = keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction="none"
+    )
+    cross_entropy = loss_object(label, pred)
     perplexity = K.exp(cross_entropy)
 
     mask = tf.cast(mask, dtype=perplexity.dtype)
