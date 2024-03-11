@@ -8,7 +8,7 @@ from symusic import Score
 from tqdm import tqdm
 
 BUFFER_SIZE = 20000
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 SEQ_LENGTH = 64
 with open("tokenizer.json") as f:
     config = json.load(f)

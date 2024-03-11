@@ -1,7 +1,6 @@
 import keras
-import tensorflow as tf
 import keras.backend as K
-from tokenizer import VOCAB_SIZE
+import tensorflow as tf
 
 
 def masked_loss(label, pred):
