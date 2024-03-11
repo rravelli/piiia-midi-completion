@@ -159,18 +159,21 @@ class MIDIGenerator2(tf.Module):
 
 def generate_sample(
     input_file: str,
-    recursions=1,
+    token_count=1,
     output_dir="generated_samples",
     weights_path: str = "training_data/training_2/cp.ckpt",
+    generate_audio=True,
 ):
     score = Score(input_file)
     # init model
     model = create_model()
-    model.load_weights(weights_path)
+    model.load_weights(
+        weights_path
+    ).expect_partial()  # load weights and ignore warnings
     # offset = randint(1, 1000)
     # generate midi
     input, output = MIDIGenerator2(model, TOKENIZER)(
-        score, recursions=recursions
+        score, recursions=token_count
     )
 
     date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
@@ -183,12 +186,13 @@ def generate_sample(
     with open(f"{sample_dir}/.gitignore", "w") as f:
         f.write("*")
     # convert to audio
-    FluidSynth().midi_to_audio(
-        f"{sample_dir}/final.mid", f"{sample_dir}/final.wav"
-    )
-    FluidSynth().midi_to_audio(
-        f"{sample_dir}/output.mid", f"{sample_dir}/output.wav"
-    )
+    if generate_audio:
+        FluidSynth().midi_to_audio(
+            f"{sample_dir}/final.mid", f"{sample_dir}/final.wav"
+        )
+        FluidSynth().midi_to_audio(
+            f"{sample_dir}/output.mid", f"{sample_dir}/output.wav"
+        )
 
 
 if __name__ == "__main__":
@@ -197,10 +201,10 @@ if __name__ == "__main__":
     # get midis
     _, _, examples = download_maestro_dataset()
     file = examples[randint(0, len(examples) - 1)]
-    # file = "./Pop 1 - C major.mid"
     # generate
     generate_sample(
         file,
-        recursions=64 * 8,
-        weights_path="training_data/training_2/cp.ckpt",
+        token_count=64 * 8,
+        weights_path="training_data/2024-03-09T17:33:25/cp.ckpt",
+        generate_audio=True,
     )
