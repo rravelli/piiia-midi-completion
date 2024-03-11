@@ -11,9 +11,9 @@ from model import create_model
 from tokenizer import BATCH_SIZE, SEQ_LENGTH, make_midi_batchesv2
 from utils import print_accuracy_and_loss
 
-EPOCHS = 1
-TRAIN_FILES = 2
-VALIDATION_FILES = 2
+EPOCHS = 10
+TRAIN_FILES = 400
+VALIDATION_FILES = 300
 
 if __name__ == "__main__":
     # download dataset

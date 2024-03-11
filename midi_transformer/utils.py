@@ -22,9 +22,7 @@ def print_accuracy_and_loss(history_path="history.pkl", output_dir=""):
     # Tracer l'accuracy
     plt.subplot(1, 2, 1)
     plt.plot(loaded_history["masked_accuracy"], label="masked_accuracy")
-    plt.plot(
-        loaded_history["val_masked_accuracy"], label="val_masked_accuracy"
-    )
+    plt.plot(loaded_history["val_masked_accuracy"], label="val_masked_accuracy")
     plt.title("Masked accuracy over epochs")
     plt.xlabel("Epochs")
     plt.ylabel("Accuracy")
@@ -54,6 +52,3 @@ def print_accuracy_and_loss(history_path="history.pkl", output_dir=""):
             i += 1
         name = name + f"_({i}).png"
     plt.savefig(Path(output_dir).joinpath(name))
-
-
-print_accuracy_and_loss()

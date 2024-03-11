@@ -24,11 +24,11 @@ def perplexity(label, pred):
         from_logits=True, reduction="none"
     )
     cross_entropy = loss_object(label, pred)
-    perplexity = K.exp(cross_entropy)
 
-    mask = tf.cast(mask, dtype=perplexity.dtype)
-    perplexity *= mask
-
-    perplexity = tf.reduce_sum(perplexity) / tf.reduce_sum(mask)
+    mask = tf.cast(mask, dtype=cross_entropy.dtype)
+    cross_entropy *= mask
+    step1 = K.mean(cross_entropy, axis=-1)
+    step2 = K.exp(step1)
+    perplexity = K.mean(step2)
 
     return perplexity
