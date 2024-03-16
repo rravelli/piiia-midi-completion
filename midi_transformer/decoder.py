@@ -1,5 +1,6 @@
+from attention import CausalSelfAttention, CrossAttention
+from feed_forward import FeedForward
 import tensorflow as tf
-from attention import CausalSelfAttention, CrossAttention, FeedForward
 from positional_embeding import PositionalEmbedding
 
 
@@ -30,23 +31,14 @@ class DecoderLayer(tf.keras.layers.Layer):
 
 class Decoder(tf.keras.layers.Layer):
     def __init__(
-        self,
-        *,
-        num_layers,
-        d_model,
-        num_heads,
-        dff,
-        vocab_size,
-        dropout_rate=0.1
+        self, *, num_layers, d_model, num_heads, dff, vocab_size, dropout_rate=0.1
     ):
         super(Decoder, self).__init__()
 
         self.d_model = d_model
         self.num_layers = num_layers
 
-        self.pos_embedding = PositionalEmbedding(
-            vocab_size=vocab_size, d_model=d_model
-        )
+        self.pos_embedding = PositionalEmbedding(vocab_size=vocab_size, d_model=d_model)
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
         self.dec_layers = [
             DecoderLayer(

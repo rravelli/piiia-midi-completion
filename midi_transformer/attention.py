@@ -39,22 +39,3 @@ class CausalSelfAttention(BaseAttention):
         x = self.add([x, attn_output])
         x = self.layernorm(x)
         return x
-
-
-class FeedForward(tf.keras.layers.Layer):
-    def __init__(self, d_model, dff, dropout_rate=0.1):
-        super().__init__()
-        self.seq = keras.Sequential(
-            [
-                keras.layers.Dense(dff, activation="relu"),
-                keras.layers.Dense(d_model),
-                keras.layers.Dropout(dropout_rate),
-            ]
-        )
-        self.add = keras.layers.Add()
-        self.layer_norm = keras.layers.LayerNormalization()
-
-    def call(self, x):
-        x = self.add([x, self.seq(x)])
-        x = self.layer_norm(x)
-        return x
