@@ -4,6 +4,7 @@ dm-tree==0.1.8
 etils==1.6.0
 flatbuffers==23.5.26
 fluidsynth==0.2
+fluidsynth==0.2
 fonttools==4.25.0
 fsspec==2023.12.2
 googleapis-common-protos==1.62.0
@@ -11,6 +12,8 @@ importlib-resources==6.1.1
 keras==2.15.0
 libclang==16.0.6
 ml-dtypes==0.2.0
+pandas==2.1.4 
+pretty_midi==0.2.10
 pandas==2.1.4 
 pretty_midi==0.2.10
 promise==2.3
