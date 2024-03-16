@@ -1,6 +1,6 @@
-from attention import GlobalSelfAttention, FeedForward
-from positional_embeding import PositionalEmbedding
 import tensorflow as tf
+from attention import FeedForward, GlobalSelfAttention
+from positional_embeding import PositionalEmbedding
 
 
 class EncoderLayer(tf.keras.layers.Layer):

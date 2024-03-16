@@ -1,66 +1,57 @@
+import json
+from pathlib import Path
+
+import numpy as np
 import tensorflow as tf
-import keras
+from miditok import REMI, TokenizerConfig
+from symusic import Score
+from tqdm import tqdm
 
-MAX_TOKENS = 128
 BUFFER_SIZE = 20000
-BATCH_SIZE = 64
+BATCH_SIZE = 32
+SEQ_LENGTH = 64
+with open("tokenizer.json") as f:
+    config = json.load(f)
+TOKENIZER_CONFIG = TokenizerConfig(use_programs=True, **config)
+TOKENIZER = REMI(TOKENIZER_CONFIG)
+VOCAB_SIZE = len(TOKENIZER.vocab)
 
 
-# Download tokenizer model
-def download_tokenizer():
-    model_name = "ted_hrlr_translate_pt_en_converter"
-    keras.utils.get_file(
-        f"{model_name}.zip",
-        f"https://storage.googleapis.com/download.tensorflow.org/models/{model_name}.zip",  # noqa
-        cache_dir=".",
-        cache_subdir="",
-        extract=True,
-    )
-    return tf.saved_model.load(model_name)
+def split_labels(sequences):
+    context = sequences[:SEQ_LENGTH]
+    inputs = sequences[SEQ_LENGTH : 2 * SEQ_LENGTH - 1]
+    labels = sequences[SEQ_LENGTH + 1 : 2 * SEQ_LENGTH]
+    return (context, inputs), labels
 
 
-def prepare_batch(pt, en, tokenizer):
-    """The following function takes batches of text as input, and converts
-    them to a format suitable for training.
+def make_midi_batchesv2(
+    file_paths: list[Path], num_files: int = 300, tokenizer=TOKENIZER
+) -> tf.data.Dataset:
+    """Generate a dataset from midi files
 
-    1. It tokenizes them into ragged batches.
-    2. It trims each to be no longer than `MAX_TOKENS`.
-    3. It splits the target (English) tokens into inputs and labels. These are
-    shifted by one step so that at each input location the `label` is the id
-    of the next token.
-    4. It converts the `RaggedTensor`s to padded dense `Tensor`s.
-    5. It returns an `(inputs, labels)` pair.
+    Args:
+        file_paths (list[Path]): List of paths of files to convert
+        num_files (int, optional): Number of files to include in the dataset. Defaults to 300.
+
+    Returns:
+        DatasetV2: the generated dataset containing all midi files
     """
-    pt = tokenizer.pt.tokenize(pt)  # Output is ragged.
-    pt = pt[:, :MAX_TOKENS]  # Trim to MAX_TOKENS.
-    pt = pt.to_tensor()  # Convert to 0-padded dense Tensor
+    all_notes = []
+    for file in tqdm(file_paths[:num_files]):
+        midi = Score(file)
+        tokens = tokenizer.midi_to_tokens(midi).ids
+        for i in range(0, len(tokens) - 2 * SEQ_LENGTH, 2 * SEQ_LENGTH):
+            sample = np.array(tokens[i : i + 2 * SEQ_LENGTH])
+            all_notes.append(sample)
 
-    en = tokenizer.en.tokenize(en)
-    en = en[:, : (MAX_TOKENS + 1)]
-    en_inputs = en[:, :-1].to_tensor()  # Drop the [END] tokens
-    en_labels = en[:, 1:].to_tensor()  # Drop the [START] tokens
+    train_notes = np.array(all_notes)
+    sequences = tf.data.Dataset.from_tensor_slices(train_notes)
+    seq_ds = sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 
-    return (pt, en_inputs), en_labels
-
-
-def make_batches(ds: tf.data.Dataset, tokenizer):
-    """The function below converts a dataset of text examples into data of
-    batches for training.
-
-    1. It tokenizes the text, and filters out the sequences that are too long.
-       (The `batch`/`unbatch` is included because the tokenizer is much more
-       efficient on large batches).
-    2. The `cache` method ensures that that work is only executed once.
-    3. Then `shuffle` and, `dense_to_ragged_batch` randomize the order and
-    assemble batches of examples.
-    4. Finally `prefetch` runs the dataset in parallel with the model to
-    ensure that data is available when needed. See [Better performance with
-    the [tf.data](https://www.tensorflow.org/guide/data_performance.ipynb)
-    for details.
-    """
-    return (
-        ds.shuffle(BUFFER_SIZE)
-        .batch(BATCH_SIZE)
-        .map(lambda pt, en: prepare_batch(pt, en, tokenizer), tf.data.AUTOTUNE)
-        .prefetch(buffer_size=tf.data.AUTOTUNE)
+    buffer_size = BUFFER_SIZE  # the number of items in the dataset
+    train_ds = (
+        seq_ds.shuffle(buffer_size)
+        .batch(BATCH_SIZE, drop_remainder=True)
+        .prefetch(tf.data.experimental.AUTOTUNE)
     )
+    return train_ds

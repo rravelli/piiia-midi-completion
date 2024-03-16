@@ -1,13 +1,12 @@
 import keras
-from encoder import Encoder
 from decoder import Decoder
+from encoder import Encoder
 
-
-NUM_LAYERS = 4
+NUM_LAYERS = 6
 D_MODEL = 128
 DFF = 512
 NUM_HEADS = 8
-DEOPOUT_RATE = 0.1
+DROPOUT_RATE = 0.1
 
 
 class Transformer(keras.Model):
@@ -46,12 +45,11 @@ class Transformer(keras.Model):
     def call(self, inputs):
         # To use a Keras model with `.fit` you must pass all your inputs in the
         # first argument.
-        context, x = inputs
+        context, x = inputs[0], inputs[1]
 
         context = self.encoder(context)  # (batch_size, context_len, d_model)
 
         x = self.decoder(x, context)  # (batch_size, target_len, d_model)
-
         # Final linear layer output.
         logits = self.final_layer(
             x

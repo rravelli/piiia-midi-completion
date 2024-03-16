@@ -1,7 +1,8 @@
+import keras
 import tensorflow as tf
 
 
-class BaseAttention(tf.keras.layers.Layer):
+class BaseAttention(keras.layers.Layer):
     def __init__(self, **kwargs):
         super().__init__()
         self.mha = tf.keras.layers.MultiHeadAttention(**kwargs)
@@ -43,15 +44,15 @@ class CausalSelfAttention(BaseAttention):
 class FeedForward(tf.keras.layers.Layer):
     def __init__(self, d_model, dff, dropout_rate=0.1):
         super().__init__()
-        self.seq = tf.keras.Sequential(
+        self.seq = keras.Sequential(
             [
-                tf.keras.layers.Dense(dff, activation="relu"),
-                tf.keras.layers.Dense(d_model),
-                tf.keras.layers.Dropout(dropout_rate),
+                keras.layers.Dense(dff, activation="relu"),
+                keras.layers.Dense(d_model),
+                keras.layers.Dropout(dropout_rate),
             ]
         )
-        self.add = tf.keras.layers.Add()
-        self.layer_norm = tf.keras.layers.LayerNormalization()
+        self.add = keras.layers.Add()
+        self.layer_norm = keras.layers.LayerNormalization()
 
     def call(self, x):
         x = self.add([x, self.seq(x)])
