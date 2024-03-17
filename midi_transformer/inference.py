@@ -23,9 +23,7 @@ def notes_to_midi(
 ) -> pretty_midi.PrettyMIDI:
     # Vérification pour un tableau pandas vide
     if notes.empty:
-        raise ValueError(
-            "Empty notes DataFrame. Cannot generate MIDI with no notes."
-        )
+        raise ValueError("Empty notes DataFrame. Cannot generate MIDI with no notes.")
     # Vérification pour des durées de note négatives
     if (notes["duration"] < 0).any():
         raise ValueError("Note duration must be positive.")
@@ -70,25 +68,19 @@ class MIDIGenerator(tf.Module):
                 self.tokenizer(score).ids[SEQ_LENGTH + offset : 2 * SEQ_LENGTH]
             )
         else:
-            melody = tf.convert_to_tensor(
-                self.tokenizer(score).ids[-2 * SEQ_LENGTH :]
-            )
+            melody = tf.convert_to_tensor(self.tokenizer(score).ids[-2 * SEQ_LENGTH :])
         melody = tf.reshape(melody, (1, melody.shape[0]))
 
         encoder_input = melody
         final_output = melody.numpy()
 
         for _ in tqdm(range(recursions)):
-            output_array = tf.TensorArray(
-                dtype=tf.int64, size=0, dynamic_size=True
-            )
+            output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
             output_array = output_array.write(0, [0])
             encoder_input = tf.convert_to_tensor(final_output[-SEQ_LENGTH:])
             for i in tqdm(tf.range(max_length)):
                 output = tf.transpose(output_array.stack())
-                predictions = self.transformer(
-                    (encoder_input, output), training=False
-                )
+                predictions = self.transformer((encoder_input, output), training=False)
 
                 # Select the last token from the `seq_len` dimension.
                 predictions = predictions[
@@ -102,9 +94,7 @@ class MIDIGenerator(tf.Module):
                 output_array = output_array.write(i + 1, predicted_id[0])
 
             output = tf.transpose(output_array.stack())
-            final_output = np.concatenate(
-                (final_output, output.numpy()), axis=1
-            )
+            final_output = np.concatenate((final_output, output.numpy()), axis=1)
 
         input_ = self.tokenizer(score).ids
         if slice_start:
@@ -130,7 +120,8 @@ class MIDIGenerator2(tf.Module):
 
         melody = self.tokenizer(score).ids[offset : 4 * SEQ_LENGTH + offset]
 
-        data_list = melody
+        data_list = []
+        data_list.extend(melody)
         output = []
         for _ in tqdm(range(recursions)):
             data = tf.constant([data_list])
@@ -146,9 +137,7 @@ class MIDIGenerator2(tf.Module):
             )
 
             # Select the last token from the `seq_len` dimension.
-            predictions = predictions[
-                :, -1:, :
-            ]  # Shape `(batch_size, 1, vocab_size)`.
+            predictions = predictions[:, -1:, :]  # Shape `(batch_size, 1, vocab_size)`.
             predicted_id = tf.argmax(predictions, axis=-1)
             token = int(predicted_id[0, 0])
             data_list.append(token)
@@ -172,9 +161,7 @@ def generate_sample(
     ).expect_partial()  # load weights and ignore warnings
     # offset = randint(1, 1000)
     # generate midi
-    input, output = MIDIGenerator2(model, TOKENIZER)(
-        score, recursions=token_count
-    )
+    input, output = MIDIGenerator2(model, TOKENIZER)(score, recursions=token_count)
 
     date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     sample_dir = f"{output_dir}/{date}"
@@ -187,9 +174,7 @@ def generate_sample(
         f.write("*")
     # convert to audio
     if generate_audio:
-        FluidSynth().midi_to_audio(
-            f"{sample_dir}/final.mid", f"{sample_dir}/final.wav"
-        )
+        FluidSynth().midi_to_audio(f"{sample_dir}/final.mid", f"{sample_dir}/final.wav")
         FluidSynth().midi_to_audio(
             f"{sample_dir}/output.mid", f"{sample_dir}/output.wav"
         )
